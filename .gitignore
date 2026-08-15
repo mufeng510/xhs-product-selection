@@ -1,3 +1,14 @@
 .omx/
+.env
 .DS_Store
 *.log
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+.next/
+backup/
+data/audit/
+data/app/
+*.pyc
+frontend/.next/

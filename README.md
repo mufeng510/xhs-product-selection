@@ -1,3 +1,119 @@
-# xhs-product-selection
+# 小红书选品情报系统
 
-小红书选品项目。
+个人 NAS / 家用服务器上的小红书选品情报系统。通过独立 Adapter 调用开源 All-IN-ONE（`aione` CLI），不修改 All-IN-ONE 本体。
+
+## 功能
+
+- 关键词采集笔记、去重、商品候选提取
+- 账号监控与新笔记识别
+- 商品/店铺库、每日快照、趋势（无历史则返回 null）
+- 爆款评分（可配置权重，0–100）
+- QianFan `user-shop` 店铺匹配（不是通用商品目录）
+- 企业微信 Webhook 通知
+- Web 管理后台与 XHS 接口审计
+- AI / Agent API 预留（第一版为 Mock）
+
+## 架构
+
+```
+frontend (Next.js :3000)
+    → backend (FastAPI :8000 + All-IN-ONE + Spider_XHS)
+        → postgres :5432
+```
+
+All-IN-ONE 只作为采集引擎，安装在 backend 镜像内。
+
+## 目录结构
+
+- `backend/` FastAPI、Alembic、Adapter、任务
+- `frontend/` Next.js standalone
+- `scripts/` 初始化、健康检查、备份、接口审计
+- `tests/` 单元测试
+
+## Docker 部署
+
+```bash
+cp .env.example .env
+docker compose up -d
+```
+
+打开 `http://服务器IP:3000`，看到「欢迎使用小红书选品情报系统」。
+
+启动时自动：等待 PostgreSQL → Alembic migrate → 启动 API → 启动前端。
+
+## 环境变量
+
+见 `.env.example`。关键项：
+
+- `DATABASE_URL` 指向 compose 内 postgres
+- `AIONE_XHS_PC_COOKIES` PC 笔记/用户接口
+- `AIONE_XHS_QIANFAN_COOKIES` 千帆接口
+- `XHS_COOKIE` 仅作为 PC cookie 别名
+- `WECHAT_WEBHOOK_URL` 企业微信机器人
+
+不要把 Cookie 提交到 Git。
+
+## 小红书登录配置
+
+推荐把 cookie 写入环境变量，或挂载到容器 `/data/xhs`（`XDG_CONFIG_HOME`）。
+
+All-IN-ONE 实际 cookie 文件位置：
+
+`$XDG_CONFIG_HOME/aione/xhs/{profile}.json`
+
+PC 使用 profile `pc`，千帆使用 `qianfan`。`AIONE_XHS_COOKIES` 只对 profile `default` 生效，不能直接给 `note search` 用。
+
+## QianFan 配置
+
+必须使用千帆 cookie。第一版匹配路径：
+
+```
+笔记候选 → 可选 qianfan user-by-page --choice -1 → user-shop(buyer_id) → shops
+```
+
+`user-shop` 是分销商合作店铺，不是商品目录。销量/评价/价格若接口未提供则为 NULL。
+
+禁止调用交互式 `choose-categories`。
+
+## 与 All-IN-ONE 实际差异
+
+1. 真实 HTTP 在 `aione setup` 克隆的 Spider_XHS，不在 All-IN-ONE 仓库本体。
+2. 镜像需要 Python + Node + Git。
+3. `user-by-page` 需要 `choice` + `distribution-category`；MVP 使用 `--choice -1`。
+4. Cookie 环境变量以 `AIONE_XHS_PC_COOKIES` / `AIONE_XHS_QIANFAN_COOKIES` 为准。
+5. 当前 Spider_XHS 的 `XHS_Apis` 需要 `XHSPcAuth`。Adapter 先走 CLI；若构造失败，仅在 Adapter 内使用 `XHSPcAuth.from_cookie` 兜底。
+6. 不要把 `XDG_DATA_HOME` 指到空的 cookie 卷，以免盖住镜像内烘焙的 `/app/upstreams`。
+
+## 数据库
+
+PostgreSQL 16。Schema 变更只走 Alembic。
+
+## 定时任务
+
+APScheduler 跑在唯一 backend 进程内：关键词约 12 小时，账号约 6 小时。也可在 Web 点「立即执行」。
+
+## 微信通知
+
+`NotificationProvider` + 企业微信 Webhook。默认只推重要事件（新爆款等）。
+
+## 接口文档
+
+后端启动后访问 `http://服务器IP:8000/docs`。
+
+## 故障排查
+
+- `/health` 中 `xhs_adapter=ok` 只表示 CLI 和 upstream 存在，不表示已登录。
+- 审计页商品字段全 ❌：尚未用真实 cookie 拉过千帆 JSON，属预期。
+- 采集失败：检查 PC / 千帆 cookie 是否分别配置。
+
+## 备份恢复
+
+```bash
+./scripts/backup.sh
+```
+
+dump 保存在 `./backup/`。
+
+## 升级
+
+拉取新版本后 `docker compose build && docker compose up -d`。容器启动会自动 migrate。不要在容器里手动改库结构。
