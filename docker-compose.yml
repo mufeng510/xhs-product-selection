@@ -14,6 +14,7 @@ services:
       retries: 20
 
   backend:
+    image: ${BACKEND_IMAGE:-jerry0510/xhs-product-selection:backend}
     build:
       context: ./backend
     environment:
@@ -34,6 +35,7 @@ services:
       retries: 10
 
   frontend:
+      image: ${FRONTEND_IMAGE:-jerry0510/xhs-product-selection:frontend}
     build:
       context: ./frontend
       args:
