@@ -37,3 +37,14 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def sync_database_url(url: str | None = None) -> str:
+    """Convert the app DATABASE_URL to a sync SQLAlchemy URL for Alembic."""
+    raw = url if url is not None else get_settings().database_url
+    if "+asyncpg" in raw:
+        return raw.replace("+asyncpg", "+psycopg2", 1)
+    if raw.startswith("postgresql://"):
+        return "postgresql+psycopg2://" + raw[len("postgresql://"):]
+    return raw
+

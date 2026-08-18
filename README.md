@@ -102,6 +102,7 @@ APScheduler 跑在唯一 backend 进程内：关键词约 12 小时，账号约 
 
 ## 故障排查
 
+- backend 卡在 `waiting for postgres...` 后报 `No module named 'psycopg2'`：镜像缺同步驱动。当前版本已在依赖中加入 `psycopg2-binary`，需重新 build backend 镜像后再 `docker compose up -d`。
 - `/health` 中 `xhs_adapter=ok` 只表示 CLI 和 upstream 存在，不表示已登录。
 - 审计页商品字段全 ❌：尚未用真实 cookie 拉过千帆 JSON，属预期。
 - 采集失败：检查 PC / 千帆 cookie 是否分别配置。
