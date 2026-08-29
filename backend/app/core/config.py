@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     xhs_profile: str = "pc"
     admin_token: str | None = None
     wechat_webhook_url: str | None = None
+    xhs_pc_cookie: str | None = None
+    xhs_qianfan_cookie: str | None = None
+    # 兼容旧变量名：AIONE_XHS_PC_COOKIES / AIONE_XHS_QIANFAN_COOKIES / XHS_COOKIE
     aione_xhs_pc_cookies: str | None = None
     aione_xhs_qianfan_cookies: str | None = None
     xhs_cookie: str | None = None
@@ -29,10 +32,10 @@ class Settings(BaseSettings):
     static_dir: str = "/app/static"
 
     def pc_cookie(self) -> str | None:
-        return self.aione_xhs_pc_cookies or self.xhs_cookie or None
+        return self.xhs_pc_cookie or self.aione_xhs_pc_cookies or self.xhs_cookie or None
 
     def qianfan_cookie(self) -> str | None:
-        return self.aione_xhs_qianfan_cookies or None
+        return self.xhs_qianfan_cookie or self.aione_xhs_qianfan_cookies or None
 
 
 @lru_cache

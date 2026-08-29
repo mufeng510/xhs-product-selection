@@ -11,6 +11,7 @@ const links = [
   ["/radar", "爆款雷达"],
   ["/accounts", "账号监控"],
   ["/tasks", "任务中心"],
+  ["/settings", "Cookie 设置"],
   ["/system/audit", "系统审计"],
 ];
 

@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy import text
 
 from app.adapters.xhs.adapter import XHSAdapter
-from app.api import accounts, agent, audit, dashboard, keywords, notes, notifications, products, shops, tasks
+from app.api import accounts, agent, audit, dashboard, keywords, notes, notifications, products, settings, shops, tasks
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.session import engine
@@ -32,6 +32,7 @@ app.include_router(tasks.router)
 app.include_router(notifications.router)
 app.include_router(dashboard.router)
 app.include_router(audit.router)
+app.include_router(settings.router)
 app.include_router(agent.router)
 
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import get_settings
+from app.services import cookie_service
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class AioneCLI:
             if value is None:
                 continue
             cmd.extend([f"--{key.replace('_', '-')}", str(value)])
-        cookie = self.settings.pc_cookie() if profile == "pc" else self.settings.qianfan_cookie()
+        cookie = cookie_service.resolve_value("pc" if profile == "pc" else "qianfan")
         if cookie:
             cmd.extend(["--cookies", cookie])
         logger.info("aione_exec endpoint=%s profile=%s", f"{resource}.{action}", profile)

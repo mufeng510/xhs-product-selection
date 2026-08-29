@@ -55,22 +55,26 @@ docker run -d --name xhs-selection -p 8000:8000 -v xhs-data:/data jerry0510/xhs-
 
 - `DATABASE_URL` 默认 SQLite，如需 PostgreSQL 改成 `postgresql+asyncpg://用户:密码@主机:5432/库名` 即可
 - `APP_PORT` 宿主机端口（默认 8000）
-- `AIONE_XHS_PC_COOKIES` PC 笔记/用户接口
-- `AIONE_XHS_QIANFAN_COOKIES` 千帆接口
-- `XHS_COOKIE` 仅作为 PC cookie 别名
+- `XHS_PC_COOKIE` PC 笔记/用户接口
+- `XHS_QIANFAN_COOKIE` 千帆接口
 - `WECHAT_WEBHOOK_URL` 企业微信机器人
 
 不要把 Cookie 提交到 Git。
 
-## 小红书登录配置
+## 小红书登录配置（Cookie）
 
-推荐把 cookie 写入环境变量，或挂载到容器 `/data/xhs`（`XDG_CONFIG_HOME`）。
+系统只需要两份 Cookie：**PC**（笔记搜索 / 用户监控）和**千帆**（店铺匹配）。
 
-All-IN-ONE 实际 cookie 文件位置：
+推荐做法：打开 Web 页面 `http://服务器IP:8000/settings`「Cookie 设置」：
 
-`$XDG_CONFIG_HOME/aione/xhs/{profile}.json`
+1. 粘贴新 Cookie 并保存，立即生效，无需重启容器。
+2. 点「检测有效性」会发起一次轻量真实请求：✅ 有效 / ⚠️ 已失效 / ❌ 调用失败。
+3. 页面保存的值存放在数据库（`app_settings` 表，随数据卷持久化），优先于环境变量。
+4. Cookie 只显示掩码，不会回显完整值。
 
-PC 使用 profile `pc`，千帆使用 `qianfan`。`AIONE_XHS_COOKIES` 只对 profile `default` 生效，不能直接给 `note search` 用。
+环境变量作为初始/兜底值，解析顺序为：页面保存 > `XHS_PC_COOKIE` / `XHS_QIANFAN_COOKIE` > 旧变量 `AIONE_XHS_PC_COOKIES` / `AIONE_XHS_QIANFAN_COOKIES` / `XHS_COOKIE`（兼容保留，不再推荐）。`AIONE_XHS_COOKIES` 只对 aione 的 default profile 生效，本系统不使用，可删除。
+
+All-IN-ONE 实际 cookie 文件位置：`$XDG_CONFIG_HOME/aione/xhs/{profile}.json`。PC 使用 profile `pc`，千帆使用 `qianfan`。
 
 ## QianFan 配置
 
