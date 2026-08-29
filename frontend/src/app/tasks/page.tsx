@@ -1,8 +1,9 @@
-import { api } from "@/lib/api";
+"use client";
 
-export default async function TasksPage() {
-  let data: any = { items: [] };
-  try { data = await api("/api/tasks"); } catch {}
+import { useApi } from "@/lib/api";
+
+export default function TasksPage() {
+  const data = useApi<any>("/api/tasks", { items: [] });
   return (
     <div className="card">
       <h2>任务中心</h2>

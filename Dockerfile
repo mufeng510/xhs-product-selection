@@ -1,3 +1,14 @@
+# ---- Stage 1: 前端构建（Next.js 静态导出） ----
+FROM node:20-alpine AS frontend
+WORKDIR /web
+COPY frontend/package.json ./
+RUN npm install
+COPY frontend/ ./
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_API_BASE=""
+RUN npm run build
+
+# ---- Stage 2: 后端运行时，单镜像同时托管 API 与前端页面 ----
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -6,11 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY pyproject.toml /app/pyproject.toml
-COPY app /app/app
-COPY alembic /app/alembic
-COPY alembic.ini /app/alembic.ini
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY backend/pyproject.toml /app/pyproject.toml
+COPY backend/app /app/app
+COPY backend/alembic /app/alembic
+COPY backend/alembic.ini /app/alembic.ini
+COPY backend/docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY --from=frontend /web/out /app/static
 
 RUN pip install --no-cache-dir . "all-in-one-aione==0.1.1" \
     && chmod +x /app/docker-entrypoint.sh

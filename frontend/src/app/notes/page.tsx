@@ -1,8 +1,9 @@
-import { api, metric } from "@/lib/api";
+"use client";
 
-export default async function NotesPage() {
-  let data: any = { items: [] };
-  try { data = await api("/api/notes"); } catch {}
+import { metric, useApi } from "@/lib/api";
+
+export default function NotesPage() {
+  const data = useApi<any>("/api/notes", { items: [] });
   return (
     <div className="card">
       <h2>笔记</h2>

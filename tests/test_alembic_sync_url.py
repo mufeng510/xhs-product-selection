@@ -19,6 +19,17 @@ def test_bare_postgres_url_becomes_psycopg2():
     assert sync_database_url(url) == "postgresql+psycopg2://xhs:change_me@postgres:5432/xhs_selection"
 
 
+def test_sqlite_url_becomes_sync_sqlite():
+    url = "sqlite+aiosqlite:////data/app/xhs_selection.db"
+    assert sync_database_url(url) == "sqlite:////data/app/xhs_selection.db"
+
+
+def test_default_settings_use_sqlite():
+    from app.core.config import get_settings
+
+    assert get_settings().database_url.startswith("sqlite+aiosqlite")
+
+
 def test_alembic_env_calls_sync_database_url():
     from pathlib import Path
 

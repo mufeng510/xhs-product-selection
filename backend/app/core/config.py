@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+asyncpg://xhs:change_me@postgres:5432/xhs_selection"
+    database_url: str = "sqlite+aiosqlite:////data/app/xhs_selection.db"
     tz: str = "Asia/Shanghai"
     log_level: str = "INFO"
     xhs_profile: str = "pc"
@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     hot_baseline_weight: float = 0.05
     data_dir: str = "/data/app"
     xdg_config_home: str = "/data/xhs"
+    static_dir: str = "/app/static"
 
     def pc_cookie(self) -> str | None:
         return self.aione_xhs_pc_cookies or self.xhs_cookie or None
@@ -42,6 +43,8 @@ def get_settings() -> Settings:
 def sync_database_url(url: str | None = None) -> str:
     """Convert the app DATABASE_URL to a sync SQLAlchemy URL for Alembic."""
     raw = url if url is not None else get_settings().database_url
+    if "+aiosqlite" in raw:
+        return raw.replace("+aiosqlite", "", 1)
     if "+asyncpg" in raw:
         return raw.replace("+asyncpg", "+psycopg2", 1)
     if raw.startswith("postgresql://"):

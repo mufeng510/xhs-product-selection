@@ -1,57 +1,24 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-xhs_selection}
-      POSTGRES_USER: ${POSTGRES_USER:-xhs}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-xhs} -d ${POSTGRES_DB:-xhs_selection}"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
-  backend:
-    image: ${BACKEND_IMAGE:-jerry0510/xhs-product-selection:backend}
+  app:
+    image: ${IMAGE:-jerry0510/xhs-product-selection:latest}
     build:
-      context: ./backend
+      context: .
     env_file:
       - path: .env
         required: false
     environment:
-      XDG_CONFIG_HOME: ${XDG_CONFIG_HOME:-/data/xhs}
       TZ: ${TZ:-Asia/Shanghai}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-xhs}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-xhs_selection}}
-    depends_on:
-      postgres:
-        condition: service_healthy
+      # 默认使用 SQLite，数据文件位于卷内；如需 PostgreSQL 设置 DATABASE_URL 即可切换
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:////data/app/xhs_selection.db}
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${APP_PORT:-8000}:8000"
     volumes:
-      - xhs_data:/data/xhs
-      - app_data:/data/app
+      - app_data:/data
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
       interval: 15s
       timeout: 5s
       retries: 10
 
-  frontend:
-    image: ${FRONTEND_IMAGE:-jerry0510/xhs-product-selection:frontend}
-    build:
-      context: ./frontend
-      args:
-        NEXT_PUBLIC_API_BASE: http://backend:8000
-    environment:
-      API_INTERNAL_BASE: http://backend:8000
-    depends_on:
-      - backend
-    ports:
-      - "${WEB_PORT:-3000}:3000"
-
 volumes:
-  postgres_data:
-  xhs_data:
   app_data:

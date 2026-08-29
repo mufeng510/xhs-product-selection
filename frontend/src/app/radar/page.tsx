@@ -1,8 +1,9 @@
-import { api, metric } from "@/lib/api";
+"use client";
 
-export default async function RadarPage() {
-  let items: any[] = [];
-  try { items = await api("/api/agent/notes/hot"); } catch { items = []; }
+import { metric, useApi } from "@/lib/api";
+
+export default function RadarPage() {
+  const items = useApi<any[]>("/api/agent/notes/hot", []);
   return (
     <div className="card">
       <h2>爆款雷达</h2>

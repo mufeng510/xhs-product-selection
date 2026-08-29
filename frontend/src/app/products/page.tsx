@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { api, metric } from "@/lib/api";
+"use client";
 
-export default async function ProductsPage() {
-  let data: any = { items: [] };
-  try { data = await api("/api/products"); } catch {}
+import { metric, useApi } from "@/lib/api";
+
+export default function ProductsPage() {
+  const data = useApi<any>("/api/products", { items: [] });
   return (
     <div className="card">
       <h2>商品库</h2>
@@ -12,7 +12,7 @@ export default async function ProductsPage() {
         <tbody>
           {(data.items || []).map((item: any) => (
             <tr key={item.id}>
-              <td><Link href={`/products/${item.id}`}>{item.product_name || "未命名"}</Link></td>
+              <td><a href={`/products/detail?id=${item.id}`}>{item.product_name || "未命名"}</a></td>
               <td>{item.brand || "—"}</td>
               <td>{metric(item.current_price)}</td>
               <td>{metric(item.current_sales)}</td>

@@ -1,8 +1,9 @@
-import { api } from "@/lib/api";
+"use client";
 
-export default async function KeywordsPage() {
-  let data: any = { items: [] };
-  try { data = await api("/api/keywords"); } catch {}
+import { useApi } from "@/lib/api";
+
+export default function KeywordsPage() {
+  const data = useApi<any>("/api/keywords", { items: [] });
   return (
     <div className="card">
       <h2>关键词</h2>

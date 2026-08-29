@@ -1,8 +1,9 @@
-import { api, metric } from "@/lib/api";
+"use client";
 
-export default async function AccountsPage() {
-  let data: any = { items: [] };
-  try { data = await api("/api/accounts"); } catch {}
+import { metric, useApi } from "@/lib/api";
+
+export default function AccountsPage() {
+  const data = useApi<any>("/api/accounts", { items: [] });
   return (
     <div className="card">
       <h2>账号监控</h2>

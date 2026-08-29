@@ -1,4 +1,4 @@
-name: Build and publish Docker images
+name: Build and publish Docker image
 
 on:
   push:
@@ -19,14 +19,6 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: backend
-            context: ./backend
-          - name: frontend
-            context: ./frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,15 +40,14 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=raw,value=${{ matrix.name }}
-            type=raw,value=${{ matrix.name }}-latest,enable={{is_default_branch}}
-            type=sha,prefix=${{ matrix.name }}-
-            type=ref,event=tag,prefix=${{ matrix.name }}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=ref,event=tag
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

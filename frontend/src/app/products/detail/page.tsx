@@ -1,9 +1,13 @@
-import { api, metric } from "@/lib/api";
+"use client";
 
-export default async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  let item: any = {};
-  try { item = await api(`/api/products/${id}`); } catch {}
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { metric, useApi } from "@/lib/api";
+
+function ProductDetailInner() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
+  const item = useApi<any>(id ? `/api/products/${id}` : "", {});
   return (
     <div className="card">
       <h2>{item.product_name || "商品详情"}</h2>
@@ -15,5 +19,13 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
       <p>数据来源：{item.source || "—"}</p>
       <p className="muted">趋势图将在有快照后展示。缺失字段显示为 —，不会伪造 0。</p>
     </div>
+  );
+}
+
+export default function ProductDetail() {
+  return (
+    <Suspense fallback={<div className="card"><h2>商品详情</h2></div>}>
+      <ProductDetailInner />
+    </Suspense>
   );
 }

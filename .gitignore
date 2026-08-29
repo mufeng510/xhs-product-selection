@@ -12,3 +12,4 @@ data/audit/
 data/app/
 *.pyc
 frontend/.next/
+frontend/out/

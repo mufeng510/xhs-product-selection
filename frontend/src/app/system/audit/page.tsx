@@ -1,8 +1,9 @@
-import { api } from "@/lib/api";
+"use client";
 
-export default async function AuditPage() {
-  let data: any = { product_fields: {} };
-  try { data = await api("/api/system/audit"); } catch {}
+import { useApi } from "@/lib/api";
+
+export default function AuditPage() {
+  const data = useApi<any>("/api/system/audit", { product_fields: {} });
   const fields = data.product_fields || {};
   return (
     <div className="card">

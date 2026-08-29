@@ -1,0 +1,14 @@
+.git
+.github
+.omo
+.env
+frontend/node_modules
+frontend/out
+frontend/.next
+backend/xhs_selection.egg-info
+tests
+scripts
+data
+backup
+*.md
+docker-compose.yml
