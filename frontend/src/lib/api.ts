@@ -7,7 +7,13 @@ const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { cache: "no-store", ...init, headers: { "Content-Type": "application/json", ...(init?.headers || {}) } });
-  if (!res.ok) throw new Error(`${res.status} ${path}`);
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.text()).slice(0, 200);
+    } catch {}
+    throw new Error(`${res.status} ${path}${detail ? ` ${detail}` : ""}`);
+  }
   return res.json() as Promise<T>;
 }
 

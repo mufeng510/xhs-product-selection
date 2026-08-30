@@ -13,6 +13,9 @@ export default function RadarPage() {
           {items.map((item) => (
             <tr key={item.id}><td>{item.title || item.source_note_id}</td><td>{metric(item.hot_score)} {item.hot_grade || ""}</td><td>{metric(item.like_count)}</td><td>{metric(item.collect_count)}</td><td>{metric(item.comment_count)}</td></tr>
           ))}
+          {items.length === 0 ? (
+            <tr><td colSpan={5} className="muted">还没有爆款数据。采集到笔记并计算热度分后会在这里排名展示。</td></tr>
+          ) : null}
         </tbody>
       </table>
     </div>

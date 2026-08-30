@@ -4,6 +4,7 @@ import { metric, useApi } from "@/lib/api";
 
 export default function ProductsPage() {
   const data = useApi<any>("/api/products", { items: [] });
+  const loaded = data.items !== undefined;
   return (
     <div className="card">
       <h2>商品库</h2>
@@ -19,6 +20,9 @@ export default function ProductsPage() {
               <td>{item.status}</td>
             </tr>
           ))}
+          {loaded && (data.items || []).length === 0 ? (
+            <tr><td colSpan={5} className="muted">还没有商品。商品从笔记内容中自动提取，先到「关键词」页执行一次采集。</td></tr>
+          ) : null}
         </tbody>
       </table>
     </div>

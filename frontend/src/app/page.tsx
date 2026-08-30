@@ -8,7 +8,7 @@ export default function Page() {
     <div>
       <div className="card">
         <h2>欢迎使用小红书选品情报系统</h2>
-        <p className="muted">先到系统审计测试 All-IN-ONE 连接，再添加关键词开始采集。</p>
+        <p className="muted">开始采集三步走：① 「Cookie 设置」粘贴 Cookie 并检测通过 → ② 「关键词」添加关键词 → ③ 点「执行」采集。数据会出现在商品库、笔记和爆款雷达。</p>
       </div>
       <div className="grid">
         <div className="card"><div className="muted">今日新增商品</div><strong>{metric(data.today_new_products)}</strong></div>

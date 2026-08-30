@@ -32,6 +32,10 @@ RUN mkdir -p /app/upstreams \
     && git clone --depth 1 https://github.com/cv-cat/Spider_XHS.git /app/upstreams/Spider_XHS \
     && if [ -f /app/upstreams/Spider_XHS/package.json ]; then npm --prefix /app/upstreams/Spider_XHS install --omit=dev; fi
 
+# Spider_XHS 的 PC/千帆链路运行时依赖（镜像原本缺失导致 No module named 'curl_cffi'）。
+# 仅装实际用到的包：opencv/numpy/qrcode/PyExecJS 只被创作者与登录模块引用，采集链路不需要。
+RUN pip install --no-cache-dir "curl_cffi==0.15.0" loguru requests retry python-dotenv
+
 ENV PYTHONUNBUFFERED=1 \
     XDG_CONFIG_HOME=/data/xhs \
     AIONE_UPSTREAM_ROOT=/app/upstreams

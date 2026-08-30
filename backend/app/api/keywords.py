@@ -62,7 +62,13 @@ async def run_keyword(keyword_id: int, db: AsyncSession = Depends(get_db)):
     row = await db.get(Keyword, keyword_id)
     if not row:
         raise HTTPException(404)
-    task = await run_keyword_job(db, row)
+    try:
+        task = await run_keyword_job(db, row)
+    except Exception:
+        # run_keyword_job 已把失败写入 keyword_tasks；返回失败任务让前端能看到具体原因
+        task = (await db.scalars(select(KeywordTask).where(KeywordTask.keyword_id == row.id).order_by(KeywordTask.id.desc()))).first()
+        if task is None:
+            raise HTTPException(500, "任务执行失败且未留下记录")
     return dump(task)
 
 

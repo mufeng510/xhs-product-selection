@@ -20,6 +20,12 @@ class AccountIn(BaseModel):
     monitor_enabled: bool = True
 
 
+class AccountPatch(BaseModel):
+    profile_url: str | None = None
+    monitor_interval: str | None = None
+    monitor_enabled: bool | None = None
+
+
 @router.get("")
 async def list_accounts(db: AsyncSession = Depends(get_db), pages: tuple[int, int] = Depends(page_params)):
     page, size = pages
@@ -47,10 +53,34 @@ async def get_account(account_id: int, db: AsyncSession = Depends(get_db)):
     return dump(row)
 
 
+@router.patch("/{account_id}")
+async def update_account(account_id: int, body: AccountPatch, db: AsyncSession = Depends(get_db)):
+    row = await db.get(Account, account_id)
+    if not row:
+        raise HTTPException(404)
+    for key, value in body.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    await db.commit()
+    return dump(row)
+
+
+@router.delete("/{account_id}")
+async def delete_account(account_id: int, db: AsyncSession = Depends(get_db)):
+    row = await db.get(Account, account_id)
+    if not row:
+        raise HTTPException(404)
+    await db.delete(row)
+    await db.commit()
+    return {"ok": True}
+
+
 @router.post("/{account_id}/run")
 async def run_account(account_id: int, db: AsyncSession = Depends(get_db)):
     row = await db.get(Account, account_id)
     if not row:
         raise HTTPException(404)
-    await run_account_job(db, row)
+    try:
+        await run_account_job(db, row)
+    except Exception as exc:
+        raise HTTPException(502, f"采集失败：{str(exc)[:200]}")
     return dump(row)
