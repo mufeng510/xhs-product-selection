@@ -1,12 +1,9 @@
 """Unified XHS cookie management.
 
 Resolution order (first non-empty wins):
-1. DB（网页「Cookie 设置」保存的值，存 app_settings 表）
-2. 新环境变量 XHS_PC_COOKIE / XHS_QIANFAN_COOKIE
-3. 旧环境变量 AIONE_XHS_PC_COOKIES / AIONE_XHS_QIANFAN_COOKIES / XHS_COOKIE
-
-The effective cookie is resolved at every CLI call, so a value saved from the
-web page takes effect immediately without restarting the container.
+1. DB (web settings page, stored in app_settings table)
+2. New env vars XHS_PC_COOKIE / XHS_QIANFAN_COOKIE
+3. Legacy env vars AIONE_XHS_PC_COOKIES / AIONE_XHS_QIANFAN_COOKIES / XHS_COOKIE
 """
 
 from __future__ import annotations
@@ -14,7 +11,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable
+from typing import Any
 
 from app.services import settings_store
 
@@ -101,11 +98,13 @@ def status_all() -> dict[str, dict]:
 
 def _interpret(payload: Any) -> tuple[str, str | None]:
     """Map a CLI payload to (status, message)."""
-    if isinstance(payload, list) and payload and isinstance(payload[0], bool):
+    if isinstance(payload, (list, tuple)) and payload and isinstance(payload[0], bool):
         if not payload[0]:
             message = str(payload[1])[:200] if len(payload) > 1 and payload[1] else "接口返回失败"
             return "invalid", message
         payload = payload[2] if len(payload) >= 3 else None
+    if payload is None:
+        return "invalid", "接口未返回数据"
     if isinstance(payload, dict):
         if payload.get("success") is False:
             return "invalid", str(payload.get("msg") or payload.get("message") or "接口返回 success=false")[:200]
@@ -113,22 +112,28 @@ def _interpret(payload: Any) -> tuple[str, str | None]:
         if code is not None and str(code) not in ("0", "1000", "200", "success"):
             return "invalid", f"接口 code={code} {str(payload.get('msg') or '')[:150]}".strip()
         if payload.get("data") is not None:
-            payload = payload["data"]
-            if isinstance(payload, dict) and payload.get("success") is False:
-                return "invalid", str(payload.get("msg") or "接口返回 success=false")[:200]
+            inner = payload["data"]
+            if isinstance(inner, dict) and inner.get("success") is False:
+                return "invalid", str(inner.get("msg") or "接口返回 success=false")[:200]
+    if isinstance(payload, list) and len(payload) > 0:
+        return "ok", ""
     return "ok", ""
 
 
-async def validate(kind: str, *, run_cli: Callable[..., Any] | None = None) -> dict:
-    """Probe the effective cookie with a lightweight signed request."""
-    from app.adapters.xhs.cli import AioneCLI, CLIError  # 延迟导入避免与 cli.py 循环依赖
+async def validate(kind: str) -> dict:
+    from app.adapters.xhs.adapter import XHSAdapter
+    from app.adapters.xhs.cli import CLIError
 
-    run = run_cli or AioneCLI().run
+    adapter = XHSAdapter()
     try:
         if kind == "pc":
-            payload = await run("note", "search", {"query": "美食", "page": 1}, profile="pc")
+            result = await adapter.search_notes("美食", page=1)
+            if result:
+                payload = result
+            else:
+                payload = None
         else:
-            payload = await run("qianfan", "all-categories", {}, profile="qianfan")
+            payload = await adapter.qianfan_categories()
         result_status, message = _interpret(payload)
     except CLIError as exc:
         result_status, message = "error", f"CLI 调用失败：{str(exc)[:200]}"
